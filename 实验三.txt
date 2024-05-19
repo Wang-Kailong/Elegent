@@ -1,0 +1,92 @@
+data segment
+    msg db 'INPUT STRING, THE END FLAG IS $'
+    count db 0
+    CHANGELINE DB 13,10,'$' ; 定义换行
+    countvalue db 'Counter value is $'
+data ends
+
+stack segment
+    db 200 dup(0)
+stack ends
+
+code segment
+    assume ds:data,ss:stack,cs:code
+start:
+    mov ax,data
+    mov ds,ax
+    mov ax,stack
+    mov ss,ax
+
+    ;循环接受字符并处理
+input_loop:
+    MOV DX, OFFSET CHANGELINE
+    MOV AH, 09H
+    INT 21H
+    ;显示提示信息
+    mov ah,09h
+    mov dx,offset msg
+    int 21h
+
+    ;接受字符
+    mov ah,01h
+    int 21h
+
+    ;是否回车换行
+    cmp al,0dh
+    je changeline_loop
+
+    ;是否结束
+    cmp al,'$'
+    je end_input
+
+    cmp al,'0'
+    jb display_char
+
+    cmp al,'9'
+    ja display_char
+
+    MOV DX, OFFSET CHANGELINE
+    MOV AH, 09H
+    INT 21H
+    mov dx,offset countvalue
+    mov ah,09H
+    int 21H
+    inc count
+    mov dl,count
+    add dl,'0'
+    mov ah,02h
+    int 21h
+    jmp input_loop
+
+changeline_loop:
+    ; 输出换行
+    MOV DX, OFFSET CHANGELINE
+    MOV AH, 09H
+    INT 21H
+    jmp input_loop
+
+display_char:
+    ; 输出换行
+    MOV DX, OFFSET CHANGELINE
+    MOV AH, 09H
+    INT 21H
+    jmp input_loop
+end_input:
+
+    MOV DX, OFFSET CHANGELINE
+    MOV AH, 09H
+    INT 21H
+    mov dx,offset countvalue
+    mov ah,09H
+    int 21H
+    ;输出计数器的值
+    mov dl,count
+    add dl,'0'
+    mov ah,02h
+    int 21h
+
+    mov ah,4ch
+    int 21h
+
+code ends
+    end start
